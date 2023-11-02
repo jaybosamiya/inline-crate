@@ -1,11 +1,11 @@
 # Inline Crate
 
-A small helper executable that helps inline an entire Rust crate into a single file
+A small helper tool to inline an entire Rust crate into a single file
 
 ## Install
 
 ``` sh
-cargo install --git https://github.com/jaybosamiya/inline-crate
+cargo install inline-crate --locked
 ```
 
 ## Usage

@@ -1,9 +1,16 @@
 [package]
 name = "inline-crate"
 version = "0.1.0"
+authors = ["Jay Bosamiya <jaybosamiya@gmail.com>"]
 edition = "2021"
+license = "BSD-3-Clause"
+readme = "README.md"
+description = "A small helper tool that to inline an entire Rust crate into a single file"
+homepage = "https://github.com/jaybosamiya/inline-crate/"
+repository = "https://github.com/jaybosamiya/inline-crate/"
+keywords = ["crate", "utility", "inline"]
+categories = ["command-line-utilities", "development-tools"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = "1.0.75"
