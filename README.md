@@ -1,5 +1,8 @@
 # Inline Crate
 
+[<img src="https://img.shields.io/badge/inline--crate-blue?logo=rust&label=crates.io" alt="crates.io">](https://crates.io/crates/inline-crate)
+[<img src="https://img.shields.io/badge/BSD_3_Clause-blue?logo=opensourceinitiative&label=License" alt="license">](https://github.com/jaybosamiya/inline-crate/blob/main/LICENSE)
+
 A small helper tool to inline an entire Rust crate into a single file
 
 ## Install
