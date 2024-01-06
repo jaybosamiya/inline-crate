@@ -31,6 +31,12 @@ Arguments:
           The output file (default: stdout)
 
 Options:
+  -v, --verbose
+          Print verbose output
+
+      --ignore-missing
+          Ignore missing modules
+
   -f, --force
           Force writing, even if the file exists
 
