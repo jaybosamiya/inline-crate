@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use clap::Parser;
+use fs_err as fs;
 use logos::Logos;
 
 /// Inline an entire crate into a single file
@@ -17,6 +18,12 @@ struct CliArgs {
     crate_root: PathBuf,
     /// The output file (default: stdout)
     output_file: Option<PathBuf>,
+    /// Print verbose output
+    #[clap(long = "verbose", short = 'v')]
+    verbose: bool,
+    /// Ignore missing modules
+    #[clap(long = "ignore-missing")]
+    ignore_missing: bool,
     /// Force writing, even if the file exists
     #[clap(long = "force", short = 'f')]
     force_output: bool,
@@ -51,7 +58,7 @@ fn multiline_comment_skip(lex: &mut logos::Lexer<Token>) -> logos::FilterResult<
     }
 }
 
-fn flatten(base: &Path, contents: String) -> Result<String> {
+fn flatten(args: &CliArgs, base: &Path, contents_path: &Path, contents: String) -> Result<String> {
     // Find locations with `mod foo;` in contents, and replace with `mod foo { <expanded foo> }`
 
     let mut ret = String::new();
@@ -92,7 +99,13 @@ fn flatten(base: &Path, contents: String) -> Result<String> {
                 base.join(module_name).join("mod.rs")
             }
         };
-        let expanded = expand(&module_path)?;
+        if args.verbose {
+            eprintln!(
+                "[i] Expanding module {:?} from {:?}",
+                module_path, contents_path
+            );
+        }
+        let expanded = expand(args, &module_path)?;
 
         // Push it over
         ret.push_str("mod ");
@@ -110,11 +123,27 @@ fn flatten(base: &Path, contents: String) -> Result<String> {
     Ok(ret)
 }
 
-fn expand(p: &Path) -> Result<String> {
-    assert!(p.is_file());
-    let base = p.parent().unwrap();
-    let contents = std::fs::read_to_string(p).unwrap();
-    flatten(base, contents)
+fn expand(args: &CliArgs, p: &Path) -> Result<String> {
+    if !p.is_file() {
+        if args.ignore_missing {
+            eprintln!("[i] Could not find module at {:?}. Ignoring", p);
+            return Ok("// Missing module file".into());
+        } else {
+            return Err(anyhow::anyhow!(
+                "Could not find module at {:?}. \
+                 Use --ignore-missing to continue by ignoring missing modules.",
+                p
+            ));
+        }
+    }
+    let no_ext = p.with_extension("");
+    let base = if !no_ext.is_dir() {
+        p.parent().unwrap()
+    } else {
+        no_ext.as_path()
+    };
+    let contents = fs::read_to_string(p).unwrap();
+    flatten(args, base, p, contents)
 }
 
 fn main() -> Result<()> {
@@ -127,11 +156,14 @@ fn main() -> Result<()> {
     }
 
     let root = args.crate_root.canonicalize().unwrap();
-    let ret = expand(&root)?;
+    if args.verbose {
+        eprintln!("[i] Expanding crate root {:?}", root);
+    }
+    let ret = expand(&args, &root)?;
 
     if let Some(out) = args.output_file {
         if args.force_output || !out.exists() {
-            let mut outfile = std::fs::File::create(out).unwrap();
+            let mut outfile = fs::File::create(out).unwrap();
             write!(outfile, "{ret}").unwrap();
             Ok(())
         } else {
